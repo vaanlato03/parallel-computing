@@ -1,0 +1,9 @@
+# Dockerfile.python — Reducer implementado en Python (para comparación de tiempos).
+# Comparar startup y ejecución vs. la imagen basada en C.
+# Construir: docker build -t lab-reducer-py -f Dockerfile.python .
+
+FROM python:3.12-slim
+WORKDIR /app
+COPY reducer.py .
+RUN chmod +x reducer.py
+ENTRYPOINT ["python3", "reducer.py"]

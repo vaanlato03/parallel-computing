@@ -1,0 +1,23 @@
+# Salidas del pipeline (generadas en ejecución)
+output/
+shuffle/
+data/chunks/
+
+# Binarios compilados localmente (no dentro de Docker)
+mapper/mapper
+reducer/reducer
+
+# Archivos temporales
+*.o
+*.tmp
+/tmp/
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
