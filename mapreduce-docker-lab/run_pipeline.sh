@@ -45,16 +45,17 @@ MAP_START=$(date +%s%N)
 PIDS=()
 for i in $(seq 0 $((N-1))); do
     CHUNK="${CHUNKS[$i]}"
-    docker run --rm \
-        -v "$(pwd)/data/chunks:/input:ro" \
-        -v "$(pwd)/shuffle:/output" \
+    # La redirección (< y >) ocurre en el HOST (bash), no dentro del contenedor.
+    # El contenedor solo lee stdin y escribe stdout; no necesita shell interno.
+    docker run --rm -i \
         lab-mapper \
-        sh -c "./mapper < /input/$(basename $CHUNK) > /output/map_${i}.txt" &
+        < "${CHUNK}" \
+        > "shuffle/map_${i}.txt" &
     PIDS+=($!)
     echo "  mapper-${i} lanzado (PID $!)"
 done
 
-# Esperar a todos los mappers
+# Esperar a todos los mappers y verificar código de salida
 FAILED=0
 for i in "${!PIDS[@]}"; do
     if ! wait "${PIDS[$i]}"; then
@@ -63,6 +64,15 @@ for i in "${!PIDS[@]}"; do
     fi
 done
 [[ $FAILED -eq 1 ]] && { echo "Abortando por fallo en mapper."; exit 1; }
+
+# Verificar que se generaron los archivos
+for i in $(seq 0 $((N-1))); do
+    if [[ ! -f "shuffle/map_${i}.txt" ]]; then
+        echo "ERROR: no se generó shuffle/map_${i}.txt"
+        exit 1
+    fi
+done
+echo "  Archivos generados: $(ls shuffle/map_*.txt | wc -l) de ${N}"
 
 MAP_END=$(date +%s%N)
 MAP_MS=$(( (MAP_END - MAP_START) / 1000000 ))
@@ -88,11 +98,11 @@ for j in $(seq 0 $((M-1))); do
         echo "  reducer-${j}: sin partición, saltando."
         continue
     fi
-    docker run --rm \
-        -v "$(pwd)/shuffle:/data:ro" \
-        -v "$(pwd)/output:/output" \
+    # Redirección en el host: stdin desde part_j, stdout a result_j
+    docker run --rm -i \
         lab-reducer \
-        sh -c "./reducer < /data/part_${j}.txt > /output/result_${j}.txt" &
+        < "shuffle/part_${j}.txt" \
+        > "output/result_${j}.txt" &
     RPIDS+=($!)
     echo "  reducer-${j} lanzado (PID $!)"
 done

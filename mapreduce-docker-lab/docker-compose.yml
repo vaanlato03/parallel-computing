@@ -1,57 +1,63 @@
 # docker-compose.yml — Alternativa declarativa al script run_pipeline.sh.
-# Útil para inspeccionar los servicios con "docker compose ps" y los logs
-# con "docker compose logs".
+#
+# LIMITACIÓN: docker compose no soporta redirección de stdin/stdout por servicio,
+# por lo que aquí se usa un entrypoint que lee y escribe archivos vía volumen.
+# Para el laboratorio se recomienda usar run_pipeline.sh (más claro pedagógicamente).
 #
 # Uso:
+#   bash split_corpus.sh 4
 #   docker compose up mapper-0 mapper-1 mapper-2 mapper-3
 #   bash shuffle.sh 2
 #   docker compose up reducer-0 reducer-1
-#
-# NOTA: los mappers se lanzan en paralelo (sin depends_on entre ellos).
-# Los reducers dependen de que el shuffle haya terminado (paso manual).
 
 services:
 
-  # ── MAPPERS (paralelos) ─────────────────────────────────────
+  # ── MAPPERS (paralelos, leen y escriben archivos vía volumen) ──
   mapper-0:
     image: lab-mapper
     volumes:
       - ./data/chunks:/input:ro
       - ./shuffle:/output
-    command: sh -c "./mapper < /input/chunk_aa > /output/map_0.txt"
+    entrypoint: sh
+    command: ["-c", "./mapper < /input/chunk_aa > /output/map_0.txt"]
 
   mapper-1:
     image: lab-mapper
     volumes:
       - ./data/chunks:/input:ro
       - ./shuffle:/output
-    command: sh -c "./mapper < /input/chunk_ab > /output/map_1.txt"
+    entrypoint: sh
+    command: ["-c", "./mapper < /input/chunk_ab > /output/map_1.txt"]
 
   mapper-2:
     image: lab-mapper
     volumes:
       - ./data/chunks:/input:ro
       - ./shuffle:/output
-    command: sh -c "./mapper < /input/chunk_ac > /output/map_2.txt"
+    entrypoint: sh
+    command: ["-c", "./mapper < /input/chunk_ac > /output/map_2.txt"]
 
   mapper-3:
     image: lab-mapper
     volumes:
       - ./data/chunks:/input:ro
       - ./shuffle:/output
-    command: sh -c "./mapper < /input/chunk_ad > /output/map_3.txt"
+    entrypoint: sh
+    command: ["-c", "./mapper < /input/chunk_ad > /output/map_3.txt"]
 
-  # ── REDUCERS (paralelos, ejecutar tras shuffle manual) ──────
+  # ── REDUCERS (ejecutar tras shuffle.sh) ────────────────────────
   reducer-0:
     image: lab-reducer
     volumes:
       - ./shuffle:/data:ro
       - ./output:/output
-    command: sh -c "./reducer < /data/part_0.txt > /output/result_0.txt"
+    entrypoint: sh
+    command: ["-c", "./reducer < /data/part_0.txt > /output/result_0.txt"]
 
   reducer-1:
     image: lab-reducer
     volumes:
       - ./shuffle:/data:ro
       - ./output:/output
-    command: sh -c "./reducer < /data/part_1.txt > /output/result_1.txt"
+    entrypoint: sh
+    command: ["-c", "./reducer < /data/part_1.txt > /output/result_1.txt"]
