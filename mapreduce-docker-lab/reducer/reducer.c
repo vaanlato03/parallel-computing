@@ -7,23 +7,23 @@
 #include <string.h>
 
 int main() {
-    char word[256], prev[256] = "";
-    int  count, total = 0;
+    char genero[256], genero_actual[256] = "";
+    int minutos, total = 0;
 
-    while (scanf("%255s\t%d", word, &count) == 2) {
-        if (strcmp(word, prev) == 0) {
-            total += count;
+    while (scanf("%255s\t%d", genero, &minutos) == 2) {
+        if (strcmp(genero, genero_actual) == 0) {
+            total += minutos;
         } else {
-            if (prev[0] != '\0') {
-                printf("%s\t%d\n", prev, total);
+            if (genero_actual[0] != '\0') {
+                printf("%s\t%d\n", genero_actual, total);
             }
-            strncpy(prev, word, 255);
-            prev[255] = '\0';
-            total = count;
+            strncpy(genero_actual, genero, 255);
+            genero_actual[255] = '\0';
+            total = minutos;
         }
     }
-    if (prev[0] != '\0') {
-        printf("%s\t%d\n", prev, total);
+    if (genero_actual[0] != '\0') {
+        printf("%s\t%d\n", genero_actual, total);
     }
     return 0;
 }
